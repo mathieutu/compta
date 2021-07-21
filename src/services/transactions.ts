@@ -21,7 +21,16 @@ export const getTransactionsOfQuarter = (transactions: Transaction[], trimester:
 }
 
 export const getSummaryForYear = async (year = currentYear) => {
-  const transactions = (await fetchTransactions()).filter(({ datePaiement, dateFacturation }) => (!datePaiement && dateFacturation.getFullYear() === year) || datePaiement?.getFullYear() === year)
+  const transactions = (await fetchTransactions())
+    .filter(({ datePaiement, dateFacturation, ref }) => {
+      if (!datePaiement) {
+        if  (!dateFacturation) return year === currentYear
+
+        return dateFacturation.getFullYear() === year
+      }
+
+      return datePaiement.getFullYear() === year;
+    })
 
   const versements = transactions.filter(({ total }) => total > 0);
 

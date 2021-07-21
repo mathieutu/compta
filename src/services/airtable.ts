@@ -16,7 +16,7 @@ type AirtableRecord = {
 
 export type Transaction = {
   datePaiement: Date | undefined;
-  dateFacturation: Date;
+  dateFacturation: Date | undefined;
   mission: string;
   client: string;
   total: number;
@@ -35,7 +35,7 @@ export const fetchTransactions = async (select: SelectOptions<AirtableRecord> = 
       ...(records as unknown as Records<AirtableRecord>).map(({ fields }) => ({
         ref: fields['Ref'],
         datePaiement: fields['Date Paiement'] ? new Date(fields['Date Paiement']) : undefined,
-        dateFacturation: new Date(fields['Date Facturation']),
+        dateFacturation: fields['Date Facturation'] ? new Date(fields['Date Facturation']) : undefined,
         mission: fields['Mission'],
         client: fields['Client'],
         total: fields['Total'],
