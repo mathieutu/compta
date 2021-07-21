@@ -1,10 +1,9 @@
-import { yearsToFetch } from '../services/transactions'
 import {
   AcademicCapIcon,
   LibraryIcon,
   OfficeBuildingIcon,
 } from '@heroicons/react/outline'
-import { GetServerSidePropsContext, GetStaticPropsContext } from 'next'
+import { GetServerSidePropsContext } from 'next'
 import { getSummaryForYear } from '../services/transactions'
 import { formatDateFr } from '../utils/dates'
 import { formatAmount } from '../utils/number'

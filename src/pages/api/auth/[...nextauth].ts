@@ -9,4 +9,9 @@ export default NextAuth({
       clientSecret: process.env.GITHUB_SECRET
     }),
   ],
+  callbacks: {
+    signIn(user, account) {
+      return process.env.GITHUB_ALLOWED_IDS?.split(',').includes(String(account.id)) || false
+    }
+  }
 })

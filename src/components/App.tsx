@@ -5,7 +5,7 @@ import { useRouter } from "next/router"
 import { Dialog, Menu, Transition } from "@headlessui/react"
 import { yearsToFetch } from "../services/transactions"
 import { classNames } from "../utils/tw"
-import { XIcon, MenuAlt1Icon, SearchIcon, BellIcon, ChevronDownIcon, OfficeBuildingIcon, CheckCircleIcon } from "@heroicons/react/outline"
+import { XIcon, MenuAlt1Icon, SearchIcon, BellIcon, ChevronDownIcon, LogoutIcon, PencilAltIcon, DocumentDuplicateIcon } from "@heroicons/react/outline"
 import Link from "next/link"
 
 export const App = ({ children, user }: { children: ReactNode, user: DefaultUser }) => {
@@ -137,7 +137,7 @@ export const App = ({ children, user }: { children: ReactNode, user: DefaultUser
             <MenuAlt1Icon className="h-6 w-6" aria-hidden="true" />
           </button>
           {/* Search bar */}
-          <div className="flex-1 px-4 flex justify-between sm:px-6 lg:max-w-6xl lg:mx-auto lg:px-8">
+          <div className="flex-1 px-4 flex justify-between sm:px-6 lg:max-w-6xl lg:mx-auto lg:px-8 shadow">
             <div className="flex-1 flex">
               <form className="w-full flex md:ml-0" action="#" method="GET">
                 <label htmlFor="search-field" className="sr-only">
@@ -158,11 +158,6 @@ export const App = ({ children, user }: { children: ReactNode, user: DefaultUser
               </form>
             </div>
             <div className="ml-4 flex items-center md:ml-6">
-              <button className="bg-white p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500">
-                <span className="sr-only">View notifications</span>
-                <BellIcon className="h-6 w-6" aria-hidden="true" />
-              </button>
-
               {/* Profile dropdown */}
               <Menu as="div" className="ml-3 relative">
                 {({ open }) => (
@@ -195,16 +190,67 @@ export const App = ({ children, user }: { children: ReactNode, user: DefaultUser
                     >
                       <Menu.Items
                         static
-                        className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none"
                       >
-                        <Menu.Item>
-                          <button
-                            onClick={() => signOut()}
-                            className="block px-4 py-2 text-sm text-gray-700"
-                          >
-                            Logout
-                          </button>
-                        </Menu.Item>
+                        <div className="py-1">
+                          <Menu.Item>
+                            {({ active }) => (
+                              <a
+                                href="https://airtable.com/tblDxymNWvm8pJQno/viwXqk9tuBBdQS0kP"
+                                className={classNames(
+                                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                  'group flex items-center px-4 py-2 text-sm'
+                                )}
+                                target="_blank" rel="noopener noreferrer"
+                              >
+                                <PencilAltIcon
+                                  className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                                  aria-hidden="true"
+                                />
+                                Éditer
+                              </a>
+                            )}
+                          </Menu.Item>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <a
+                                href="#"
+                                className={classNames(
+                                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                  'group flex items-center px-4 py-2 text-sm'
+                                )}
+                                href="https://drive.google.com/drive/folders/1iO3kgSNOK0kbcBCOxfz6sS5urB2NrxSB"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                <DocumentDuplicateIcon
+                                  className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                                  aria-hidden="true"
+                                />
+                                Factures
+                              </a>
+                            )}
+                          </Menu.Item>
+                        </div>
+                        <div className="py-1">
+                          <Menu.Item>
+                            {({ active }) => (
+                              <button
+                                onClick={() => signOut()}
+                                className={classNames(
+                                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                  'w-full group flex items-center px-4 py-2 text-sm'
+                                )}
+                              >
+                                <LogoutIcon
+                                  className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                                  aria-hidden="true"
+                                />
+                                Déconnexion
+                              </button>
+                            )}
+                          </Menu.Item>
+                        </div>
                       </Menu.Items>
                     </Transition>
                   </>
@@ -215,67 +261,6 @@ export const App = ({ children, user }: { children: ReactNode, user: DefaultUser
         </div>
         <main className="flex-1 relative pb-8 z-0 overflow-y-auto">
           {/* Page header */}
-          <div className="bg-white shadow">
-            <div className="px-4 sm:px-6 lg:max-w-6xl lg:mx-auto lg:px-8">
-              <div className="py-6 md:flex md:items-center md:justify-between lg:border-t lg:border-gray-200">
-                <div className="flex-1 min-w-0">
-                  {/* Profile */}
-                  <div className="flex items-center">
-                    <img
-                      className="hidden h-16 w-16 rounded-full sm:block"
-                      src={user.image!}
-                      alt=""
-                    />
-                    <div>
-                      <div className="flex items-center">
-                        <img
-                          className="h-16 w-16 rounded-full sm:hidden"
-                          src={user.image!}
-                          alt=""
-                        />
-                        <h1 className="ml-3 text-2xl font-bold leading-7 text-gray-900 sm:leading-9 sm:truncate">
-                          Good morning, {user.name}!
-                        </h1>
-                      </div>
-                      <dl className="mt-6 flex flex-col sm:ml-3 sm:mt-1 sm:flex-row sm:flex-wrap">
-                        <dt className="sr-only">Company</dt>
-                        <dd className="flex items-center text-sm text-gray-500 font-medium capitalize sm:mr-6">
-                          <OfficeBuildingIcon
-                            className="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400"
-                            aria-hidden="true"
-                          />
-                          Duke street studio
-                        </dd>
-                        <dt className="sr-only">Account status</dt>
-                        <dd className="mt-3 flex items-center text-sm text-gray-500 font-medium sm:mr-6 sm:mt-0 capitalize">
-                          <CheckCircleIcon className="flex-shrink-0 mr-1.5 h-5 w-5 text-green-400" aria-hidden="true" />
-                          Verified account
-                        </dd>
-                      </dl>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-6 flex space-x-3 md:mt-0 md:ml-4">
-                  <a
-                    href="https://airtable.com/tblDxymNWvm8pJQno/viwXqk9tuBBdQS0kP"
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Éditer
-                  </a>
-                  <a
-                    href="https://drive.google.com/drive/folders/1iO3kgSNOK0kbcBCOxfz6sS5urB2NrxSB"
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Factures
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {children}
 
