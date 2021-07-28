@@ -1,7 +1,8 @@
 import {
   AcademicCapIcon,
   LibraryIcon,
-  OfficeBuildingIcon,
+  TerminalIcon,
+  PresentationChartBarIcon,
 } from '@heroicons/react/outline'
 import { GetServerSidePropsContext } from 'next'
 import { getSummaryForYear } from '../services/transactions'
@@ -13,7 +14,8 @@ import { getSession } from "next-auth/client"
 
 const TypeIcons = {
   'École': AcademicCapIcon,
-  'Entreprise': OfficeBuildingIcon,
+  'Dévelopement': TerminalIcon,
+  'Formation': PresentationChartBarIcon,
   'Cotisation': LibraryIcon,
   'Subvention': LibraryIcon,
 }

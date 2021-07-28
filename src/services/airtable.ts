@@ -1,7 +1,7 @@
 import Airtable, { Records, SelectOptions } from 'airtable';
 
 
-type Type = 'École' | 'Entreprise' | 'Cotisation' | 'Subvention'
+type Type = 'École' | 'Dévelopement'| 'Formation' | 'Cotisation' | 'Subvention'
 
 type AirtableRecord = {
   'Date Paiement'?: string;
