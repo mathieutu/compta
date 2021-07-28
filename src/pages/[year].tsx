@@ -12,9 +12,9 @@ import { classNames } from '../utils/tw'
 import { AsyncReturnType } from '../utils/types'
 import { getSession } from "next-auth/client"
 
-const TypeIcons = {
+const typeIcons = {
   'École': AcademicCapIcon,
-  'Dévelopement': TerminalIcon,
+  'Développement': TerminalIcon,
   'Formation': PresentationChartBarIcon,
   'Cotisation': LibraryIcon,
   'Subvention': LibraryIcon,
@@ -26,7 +26,7 @@ const statusStyles = {
   done: 'bg-green-100 text-green-800',
 }
 
-type Props = AsyncReturnType<typeof getSummaryForYear> & { year: number }
+type Props = AsyncReturnType<typeof getSummaryForYear> & { year: number, searchQuery: string }
 
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
@@ -36,7 +36,7 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   return {
     props: {
       session,
-      ...(session ? await getSummaryForYear(year): {}),
+      ...(session ? await getSummaryForYear(year) : {}),
       year,
     },
   }
@@ -56,7 +56,7 @@ const Card = ({ icon, title, amount, amountSecond }: { icon: string, title: stri
               <div className="text-xl font-medium text-gray-900">
                 {formatAmount(amount)}
                 {amountSecond !== undefined ? (
-                  <div className="text-xs font-light text-gray-500">{formatAmount(amountSecond)}</div>
+                  <div className="text-xs font-light text-gray-500">{amountSecond ? formatAmount(amountSecond) : <>&nbsp;</>}</div>
                 ) : null}
               </div>
             </dd>
@@ -66,28 +66,56 @@ const Card = ({ icon, title, amount, amountSecond }: { icon: string, title: stri
     </div>
   </div>
 }
-export default function Index({ transactions, chiffresAffaires, nets, year, quartersDetails }: Props) {
+export default function Index({ transactions, chiffresAffaires, nets, year, quartersDetails, searchQuery }: Props) {
+
+  const formattedTransactions = transactions
+    .map(transaction => {
+      const status = transaction.datePaiement ? 'done' : transaction.dateFacturation ? 'waiting' : 'draft'
+      const statusLabel = transaction.datePaiement
+        ? `Payé le ${formatDateFr(transaction.datePaiement)}`
+        : transaction.dateFacturation
+          ? `${transaction.total > 0 ? 'Facturé' : 'Réglé'} le ${formatDateFr(transaction.dateFacturation)}`
+          : 'À facturer'
+
+      const title = `${transaction.client} - ${transaction.mission} (${transaction.ref})`
+
+      return {
+        title,
+        statusLabel,
+        status: status as typeof status,
+        total: transaction.total,
+        prix: transaction.prix,
+        type: transaction.type,
+        ref: transaction.ref,
+      }
+    })
+    .filter(transaction => searchQuery.toLowerCase().split(' ').every(word =>
+      Object.values(transaction).join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(word)
+    ))
+
 
   return (
     <div className="">
-      <div className="mt-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-lg leading-6 font-medium text-gray-900">Année {year}</h2>
-        <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <Card icon="💰" title="CA projeté" amount={chiffresAffaires.projete} />
-          <Card icon="💵" title="CA réel" amount={chiffresAffaires.realise} />
-          <Card icon="🤑" title="Net projeté" amount={nets.projete} />
-          <Card icon="🏦" title="Net réel" amount={nets.realise} />
+      {!searchQuery && <>
+        <div className="mt-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-lg leading-6 font-medium text-gray-900">Année {year}</h2>
+          <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <Card icon="💰" title="CA projeté" amount={chiffresAffaires.projete} />
+            <Card icon="💵" title="CA réel" amount={chiffresAffaires.realise} />
+            <Card icon="🤑" title="Net projeté" amount={nets.projete} />
+            <Card icon="🏦" title="Net réel" amount={nets.realise} />
+          </div>
         </div>
-      </div>
-      <div className="mt-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-lg leading-6 font-medium text-gray-900">Trimestres</h2>
-        <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {Object.entries(quartersDetails).map(([title, { amountToDeclare, plannedCotisation }]) => (
-            <Card key={title} icon="💸" title={title} amount={amountToDeclare} amountSecond={plannedCotisation} />
-          ))}
+        <div className="mt-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-lg leading-6 font-medium text-gray-900">Trimestres</h2>
+          <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {Object.entries(quartersDetails).map(([title, { amountToDeclare, plannedCotisation }]) => (
+              <Card key={title} icon="💸" title={title} amount={amountToDeclare} amountSecond={plannedCotisation} />
+            ))}
+          </div>
         </div>
-      </div>
-
+      </>
+      }
       <h2 className="max-w-6xl mx-auto mt-8 px-4 text-lg leading-6 font-medium text-gray-900 sm:px-6 lg:px-8">
         Transactions
       </h2>
@@ -95,43 +123,38 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
       {/* Activity list (smallest breakpoint only) */}
       <div className="shadow sm:hidden ">
         <ul className="mt-2 divide-y divide-gray-200 overflow-hidden shadow sm:hidden">
-          {transactions.map((transaction) => {
-            const Icon = TypeIcons[transaction.type]
+          {formattedTransactions
+            .map(transaction => {
+              const Icon = typeIcons[transaction.type]
 
-            return (
-              <li key={transaction.ref}>
-                <div className="block px-4 py-4 bg-white hover:bg-gray-50">
-                  <span className="flex items-center space-x-4">
-                    <span className="flex-1 flex space-x-2 truncate">
-                      <Icon className={classNames("flex-shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
-                      <span className="flex flex-1 flex-col text-gray-500 text-sm truncate">
-                        <span className="truncate">{transaction.client} - {transaction.mission} ({transaction.ref})</span>
-                        <span>
-                          <span className="text-gray-900 font-medium" title={transaction.prix}>{formatAmount(transaction.total)}</span>
-                        </span>
-                        <span className="text-right">
-                          <span
-                            className={classNames(
-                              statusStyles[transaction.datePaiement ? 'done' : transaction.dateFacturation ? 'waiting' : 'draft'],
-                              'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium'
-                            )}
-                          >
-                            {
-                              transaction.datePaiement
-                                ? `Payé le ${formatDateFr(transaction.datePaiement)}`
-                                : transaction.dateFacturation
-                                  ? `${transaction.total > 0 ? 'Facturé' : 'Réglé'} le ${formatDateFr(transaction.dateFacturation)}`
-                                  : 'À facturer'
-                            }
+              return (
+                <li key={transaction.ref}>
+                  <div className="block px-4 py-4 bg-white hover:bg-gray-50">
+                    <span className="flex items-center space-x-4">
+                      <span className="flex-1 flex space-x-2 truncate">
+                        <Icon className={classNames("flex-shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
+                        <span className="flex flex-1 flex-col text-gray-500 text-sm truncate">
+                          <span className="truncate">{transaction.title})</span>
+                          <span>
+                            <span className="text-gray-900 font-medium" title={transaction.prix}>{formatAmount(transaction.total)}</span>
+                          </span>
+                          <span className="text-right">
+                            <span
+                              className={classNames(
+                                statusStyles[transaction.status],
+                                'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium'
+                              )}
+                            >
+                              {transaction.statusLabel}
+                            </span>
                           </span>
                         </span>
                       </span>
                     </span>
-                  </span>
-                </div>
-              </li>
-            )
-          })}
+                  </div>
+                </li>
+              )
+            })}
         </ul>
       </div>
 
@@ -141,56 +164,40 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
           <div className="flex flex-col mt-2">
             <div className="align-middle min-w-full overflow-x-auto shadow overflow-hidden sm:rounded-lg">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Transaction
-                    </th>
-                    <th className="px-6 py-3 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Montant
-                    </th>
-                    <th className="hidden px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider md:block">
-                      Statut
-                    </th>
-                  </tr>
-                </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions.map((transaction) => {
-                    const Icon = TypeIcons[transaction.type]
+                  {formattedTransactions
+                    .map((transaction) => {
+                      const Icon = typeIcons[transaction.type]
 
-                    return (
-                      <tr key={transaction.ref} className="bg-white">
-                        <td className="max-w-0 w-full px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <div className="flex">
-                            <div className="group inline-flex space-x-2 truncate text-sm">
-                              <Icon className={classNames("flex-shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
+                      return (
+                        <tr key={transaction.ref} className="bg-white">
+                          <td className="max-w-0 w-full px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div className="flex">
+                              <div className="group inline-flex space-x-2 truncate text-sm">
+                                <Icon className={classNames("flex-shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
 
-                              <p className="text-gray-500 truncate group-hover:text-gray-900">{transaction.client} - {transaction.mission} ({transaction.ref})</p>
+                                <p className="text-gray-500 truncate group-hover:text-gray-900">{transaction.title})</p>
+                              </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-right whitespace-nowrap text-sm text-gray-500">
-                          <span className="text-gray-900 font-medium" title={transaction.prix}>
-                            {formatAmount(transaction.total)}
-                          </span>
-                        </td>
-                        <td className="hidden px-6 py-4 whitespace-nowrap text-sm text-gray-500 md:block">
-                          <span
-                            className={classNames(
-                              statusStyles[transaction.datePaiement ? 'done' : transaction.dateFacturation ? 'waiting' : 'draft'],
-                              'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium'
-                            )}
-                          >
-                            {transaction.datePaiement
-                              ? `Payé le ${formatDateFr(transaction.datePaiement)}`
-                              : transaction.dateFacturation
-                                ? `${transaction.total > 0 ? 'Facturé' : 'Réglé'} le ${formatDateFr(transaction.dateFacturation)}`
-                                : 'À facturer'}
-                          </span>
-                        </td>
-                      </tr>
-                    )
-                  })}
+                          </td>
+                          <td className="px-6 py-4 text-right whitespace-nowrap text-sm text-gray-500">
+                            <span className="text-gray-900 font-medium" title={transaction.prix}>
+                              {formatAmount(transaction.total)}
+                            </span>
+                          </td>
+                          <td className="hidden px-6 py-4 whitespace-nowrap text-sm text-gray-500 md:block">
+                            <span
+                              className={classNames(
+                                statusStyles[transaction.status],
+                                'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium'
+                              )}
+                            >
+                              {transaction.statusLabel}
+                            </span>
+                          </td>
+                        </tr>
+                      )
+                    })}
                 </tbody>
               </table>
             </div>

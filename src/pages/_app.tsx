@@ -3,16 +3,21 @@ import type { AppProps } from 'next/app'
 import { useSession, signIn } from "next-auth/client"
 import { App } from '../components/App'
 import { Login } from '../components/Login'
+import { useState } from 'react'
 
 export default function MyApp({ Component, pageProps }: AppProps) {
 
-  if (pageProps.session?.user) {
-    return (
-      <App user={pageProps.session.user}>
-        <Component {...pageProps} />
-      </App>
-    )
+  const [searchQuery, setSearchQuery] = useState('')
+
+  if (!pageProps.session?.user) {
+    return <Login />
   }
 
-  return <Login />
+
+  return (
+    <App user={pageProps.session.user} onSearch={setSearchQuery}>
+      <Component {...pageProps} searchQuery={searchQuery}/>
+    </App>
+  )
+
 }

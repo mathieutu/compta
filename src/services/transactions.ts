@@ -13,10 +13,11 @@ export const getTransactionsOfQuarter = (transactions: Transaction[], trimester:
   const quarterTransactions = transactions.filter(({ datePaiement }) => isDateInTrimester(datePaiement, trimester, year))
   const amountToDeclare = sumTransactionsTotal(quarterTransactions)
 
+  const plannedCotisation = calcCotisation(amountToDeclare)
   return {
     transactions: quarterTransactions,
     amountToDeclare,
-    plannedCotisation: -calcCotisation(amountToDeclare),
+    plannedCotisation: plannedCotisation ? -plannedCotisation : 0,
   }
 }
 

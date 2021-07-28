@@ -8,7 +8,7 @@ import { classNames } from "../utils/tw"
 import { XIcon, MenuAlt1Icon, SearchIcon, BellIcon, ChevronDownIcon, LogoutIcon, PencilAltIcon, DocumentDuplicateIcon } from "@heroicons/react/outline"
 import Link from "next/link"
 
-export const App = ({ children, user }: { children: ReactNode, user: DefaultUser }) => {
+export const App = ({ children, user, onSearch }: { children: ReactNode, user: DefaultUser, onSearch: (searchQuery: string) => void }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
 
@@ -141,7 +141,7 @@ export const App = ({ children, user }: { children: ReactNode, user: DefaultUser
             <div className="flex-1 flex">
               <form className="w-full flex md:ml-0" action="#" method="GET">
                 <label htmlFor="search-field" className="sr-only">
-                  Search
+                  Rechercher
                 </label>
                 <div className="relative w-full text-gray-400 focus-within:text-gray-600">
                   <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none" aria-hidden="true">
@@ -149,10 +149,10 @@ export const App = ({ children, user }: { children: ReactNode, user: DefaultUser
                   </div>
                   <input
                     id="search-field"
-                    name="search-field"
                     className="block w-full h-full pl-8 pr-3 py-2 border-transparent text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-0 focus:border-transparent sm:text-sm"
-                    placeholder="Search transactions"
+                    placeholder="Rechercher"
                     type="search"
+                    onChange={(e) => onSearch(e.target.value)}
                   />
                 </div>
               </form>
