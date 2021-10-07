@@ -8,16 +8,18 @@ import { GetServerSidePropsContext } from 'next'
 import { getSummaryForYear } from '../services/transactions'
 import { formatDateFr } from '../utils/dates'
 import { formatAmount } from '../utils/number'
-import { classNames } from '../utils/tw'
+import { classNames, Heroicon } from '../utils/tw'
 import { AsyncReturnType } from '../utils/types'
 import { getSession } from "next-auth/client"
+import { Transaction, Type } from '../services/airtable'
+import { FC, useState } from 'react'
 
-const typeIcons = {
-  'École': AcademicCapIcon,
-  'Développement': TerminalIcon,
-  'Formation': PresentationChartBarIcon,
-  'Cotisation': LibraryIcon,
-  'Subvention': LibraryIcon,
+const typeIcons: Record<Type, Heroicon> = {
+  [Type.ecole]: AcademicCapIcon,
+  [Type.dev]: TerminalIcon,
+  [Type.formation]: PresentationChartBarIcon,
+  [Type.cotisation]: LibraryIcon,
+  [Type.subvention]: LibraryIcon,
 }
 
 const statusStyles = {
@@ -27,7 +29,6 @@ const statusStyles = {
 }
 
 type Props = AsyncReturnType<typeof getSummaryForYear> & { year: number, searchQuery: string }
-
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   const year = Number(ctx.params!.year)
@@ -42,8 +43,8 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   }
 }
 
-const Card = ({ icon, title, amount, amountSecond }: { icon: string, title: string, amount: number, amountSecond?: number }) => {
-  return <div className="bg-white overflow-hidden shadow rounded-lg">
+const Card = ({ icon, title, amount, amountSecond, className }: { icon: string, title: string, amount: number, amountSecond?: number, className?: string }) => {
+  return <div className={classNames("bg-white overflow-hidden shadow rounded-lg", className)}>
     <div className="p-5">
       <div className="flex items-center">
         <div className="flex-shrink-0">
@@ -66,9 +67,18 @@ const Card = ({ icon, title, amount, amountSecond }: { icon: string, title: stri
     </div>
   </div>
 }
+
 export default function Index({ transactions, chiffresAffaires, nets, year, quartersDetails, searchQuery }: Props) {
 
-  const formattedTransactions = transactions
+  type QuarterTitle = keyof typeof quartersDetails
+
+  const [selectedQuarter, selectQuarter] = useState<QuarterTitle | null>(null)
+
+  const handleQuarterSelection = (quarterTitle: QuarterTitle) => selectedQuarter === quarterTitle ? selectQuarter(null) : selectQuarter(quarterTitle)
+
+  const transactionsToShow: Transaction[] = selectedQuarter ? quartersDetails[selectedQuarter].transactions : transactions
+
+  const formattedTransactions = transactionsToShow
     .map(transaction => {
       const status = transaction.datePaiement ? 'done' : transaction.dateFacturation ? 'waiting' : 'draft'
       const statusLabel = transaction.datePaiement
@@ -106,14 +116,24 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
             <Card icon="🏦" title="Net réel" amount={nets.realise} />
           </div>
         </div>
+        {/* Quarters list */}
         <div className="mt-8 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-lg leading-6 font-medium text-gray-900">Trimestres</h2>
           <div className="mt-2 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {Object.entries(quartersDetails).map(([title, { amountToDeclare, plannedCotisation }]) => (
-              <Card key={title} icon="💸" title={title} amount={amountToDeclare} amountSecond={plannedCotisation} />
+              <button className="text-left" key={title} onClick={() => handleQuarterSelection(title as QuarterTitle)}>
+                <Card
+                  icon="💸"
+                  title={title}
+                  amount={amountToDeclare}
+                  amountSecond={plannedCotisation}
+                  className={classNames('border-2', selectedQuarter === title ? 'border-cyan-500' : 'border-transparent hover:border-gray-400')}
+                />
+              </button>
             ))}
           </div>
         </div>
+        {/* /Quarters list */}
       </>
       }
       <h2 className="max-w-6xl mx-auto mt-8 px-4 text-lg leading-6 font-medium text-gray-900 sm:px-6 lg:px-8">
