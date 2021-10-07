@@ -82,7 +82,7 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
     .map(transaction => {
       const status = transaction.datePaiement ? 'done' : transaction.dateFacturation ? 'waiting' : 'draft'
       const statusLabel = transaction.datePaiement
-        ? `Payé le ${formatDateFr(transaction.datePaiement)}`
+        ? `Versé le ${formatDateFr(transaction.datePaiement)}`
         : transaction.dateFacturation
           ? `${transaction.total > 0 ? 'Facturé' : 'Réglé'} le ${formatDateFr(transaction.dateFacturation)}`
           : 'À facturer'
