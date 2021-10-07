@@ -10,7 +10,7 @@ const isVersement = (transaction: Transaction) => ![Type.cotisation, Type.subven
 
 const sumTransactionsTotal = (records: Transaction[]) => records.reduce((acc, { total }) => acc + total, 0);
 
-const calcCotisation = (amountToDeclare: number) => Math.round(amountToDeclare * 22.2 / 100)
+const calcCotisation = (amountToDeclare: number) => Math.round(amountToDeclare * 22.4 / 100)
 
 export const getTransactionsOfQuarter = (transactions: Transaction[], trimester: number, year?: number) => {
   const quarterTransactions = transactions
