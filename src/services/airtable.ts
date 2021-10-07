@@ -1,7 +1,12 @@
 import Airtable, { Records, SelectOptions } from 'airtable';
 
-
-type Type = 'École' | 'Développement'| 'Formation' | 'Cotisation' | 'Subvention'
+export enum Type {
+  ecole = 'École',
+  dev = 'Développement',
+  formation = 'Formation',
+  cotisation = 'Cotisation',
+  subvention =  'Subvention',
+}
 
 type AirtableRecord = {
   'Date Paiement'?: string;
