@@ -196,7 +196,7 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
                               <div className="group inline-flex space-x-2 truncate text-sm">
                                 <Icon className={classNames("flex-shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
 
-                                <p className="text-gray-500 truncate group-hover:text-gray-900">{transaction.title})</p>
+                                <p className="text-gray-500 truncate group-hover:text-gray-900">{transaction.title}</p>
                               </div>
                             </div>
                           </td>
