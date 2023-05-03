@@ -1,6 +1,5 @@
 import 'tailwindcss/tailwind.css'
 import type { AppProps } from 'next/app'
-import { useSession, signIn } from "next-auth/client"
 import { App } from '../components/App'
 import { Login } from '../components/Login'
 import { useState } from 'react'
@@ -16,7 +15,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <App user={pageProps.session.user} onSearch={setSearchQuery}>
-      <Component {...pageProps} searchQuery={searchQuery}/>
+      <Component {...pageProps} searchQuery={searchQuery} />
     </App>
   )
 

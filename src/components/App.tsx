@@ -1,11 +1,11 @@
 import React, { Fragment, ReactNode, useState } from "react"
 import { DefaultUser } from "next-auth"
-import { signOut } from "next-auth/client"
+import { signOut } from "next-auth/react"
 import { useRouter } from "next/router"
 import { Dialog, Menu, Transition } from "@headlessui/react"
 import { yearsToFetch } from "../services/transactions"
 import { classNames } from "../utils/tw"
-import { XIcon, MenuAlt1Icon, SearchIcon, BellIcon, ChevronDownIcon, LogoutIcon, PencilAltIcon, DocumentDuplicateIcon } from "@heroicons/react/outline"
+import { XMarkIcon, Bars3CenterLeftIcon, MagnifyingGlassIcon, BellIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, PencilSquareIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline"
 import Link from "next/link"
 
 export const App = ({ children, user, onSearch }: { children: ReactNode, user: DefaultUser, onSearch: (searchQuery: string) => void }) => {
@@ -35,10 +35,10 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
           </Transition.Child>
           <Transition.Child
             as={Fragment}
-            enter="transition ease-in-out duration-300 transform"
+            enter="transition ease-in-out duration-300"
             enterFrom="-translate-x-full"
             enterTo="translate-x-0"
-            leave="transition ease-in-out duration-300 transform"
+            leave="transition ease-in-out duration-300"
             leaveFrom="translate-x-0"
             leaveTo="-translate-x-full"
           >
@@ -58,49 +58,46 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                     onClick={() => setSidebarOpen(false)}
                   >
                     <span className="sr-only">Close sidebar</span>
-                    <XIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                    <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
                   </button>
                 </div>
               </Transition.Child>
-              <div className="flex-shrink-0 flex items-center px-4">
+              <div className="shrink-0 flex items-center px-4">
                 <img
                   className="h-8 w-auto"
                   src="https://tailwindui.com/img/logos/easywire-logo-cyan-300-mark-white-text.svg"
                   alt="Easywire logo"
                 />
               </div>
-              <nav className="mt-5 flex-shrink-0 h-full divide-y divide-cyan-800 overflow-y-auto" aria-label="Sidebar">
+              <nav className="mt-5 shrink-0 h-full divide-y divide-cyan-800 overflow-y-auto" aria-label="Sidebar">
                 <div className="px-2 space-y-1">
                   {yearsToFetch.map((year) => (
-                    <Link key={year} href={`/${year}`}                    >
+                    <Link key={year} href={`/${year}`}
+                      className={classNames(
+                        router.query.year === year ? 'bg-cyan-800 text-white' : 'text-cyan-100 hover:text-white hover:bg-cyan-600',
+                        'group flex items-center px-2 py-2 text-base font-medium rounded-md'
+                      )}
+                      aria-current={router.query.year === year ? 'page' : undefined}>
 
-                      <a
-                        className={classNames(
-                          router.query.year === year ? 'bg-cyan-800 text-white' : 'text-cyan-100 hover:text-white hover:bg-cyan-600',
-                          'group flex items-center px-2 py-2 text-base font-medium rounded-md'
-                        )}
-                        aria-current={router.query.year === year ? 'page' : undefined}
-                      >
-                        {year}
-                      </a>
+                      {year}
                     </Link>
                   ))}
                 </div>
               </nav>
             </div>
           </Transition.Child>
-          <div className="flex-shrink-0 w-14" aria-hidden="true">
+          <div className="shrink-0 w-14" aria-hidden="true">
             {/* Dummy element to force sidebar to shrink to fit close icon */}
           </div>
         </Dialog>
       </Transition.Root>
 
       {/* Static sidebar for desktop */}
-      <div className="hidden lg:flex lg:flex-shrink-0">
+      <div className="hidden lg:flex lg:shrink-0">
         <div className="flex flex-col w-64">
           {/* Sidebar component, swap this element with another sidebar if you like */}
           <div className="flex flex-col flex-grow bg-cyan-700 pt-5 pb-4 overflow-y-auto">
-            <div className="flex items-center flex-shrink-0 px-4">
+            <div className="flex items-center shrink-0 px-4">
               <span
                 className="font-bold text-white text-2xl h-8 w-auto"
               >Compta ME</span>
@@ -108,17 +105,15 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
             <nav className="mt-5 flex-1 flex flex-col divide-y divide-cyan-800 overflow-y-auto" aria-label="Sidebar">
               <div className="px-2 space-y-1">
                 {yearsToFetch.map((year) => (
-                  <Link key={year} href={`/${year}`}                    >
+                  <Link key={year} href={`/${year}`}
+                    className={classNames(
+                      router.query.year === year ? 'bg-cyan-800 text-white' : 'text-cyan-100 hover:text-white hover:bg-cyan-600',
+                      'group flex items-center px-2 py-2 text-sm leading-6 font-medium rounded-md'
+                    )}
+                    aria-current={router.query.year === year ? 'page' : undefined}
+                  >
 
-                    <a
-                      className={classNames(
-                        router.query.year === year ? 'bg-cyan-800 text-white' : 'text-cyan-100 hover:text-white hover:bg-cyan-600',
-                        'group flex items-center px-2 py-2 text-sm leading-6 font-medium rounded-md'
-                      )}
-                      aria-current={router.query.year === year ? 'page' : undefined}
-                    >
-                      {year}
-                    </a>
+                    {year}
                   </Link>
                 ))}
               </div>
@@ -128,13 +123,13 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
       </div>
 
       <div className="flex-1 overflow-auto focus:outline-none">
-        <div className="relative z-10 flex-shrink-0 flex h-16 bg-white border-b border-gray-200 lg:border-none">
+        <div className="relative z-10 shrink-0 flex h-16 bg-white border-b border-gray-200 lg:border-none">
           <button
             className="px-4 border-r border-gray-200 text-gray-400 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-cyan-500 lg:hidden"
             onClick={() => setSidebarOpen(true)}
           >
             <span className="sr-only">Open sidebar</span>
-            <MenuAlt1Icon className="h-6 w-6" aria-hidden="true" />
+            <Bars3CenterLeftIcon className="h-6 w-6" aria-hidden="true" />
           </button>
           {/* Search bar */}
           <div className="flex-1 px-4 flex justify-between sm:px-6 lg:max-w-6xl lg:mx-auto lg:px-8 shadow">
@@ -145,7 +140,7 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                 </label>
                 <div className="relative w-full text-gray-400 focus-within:text-gray-600">
                   <div className="absolute inset-y-0 left-0 flex items-center pointer-events-none" aria-hidden="true">
-                    <SearchIcon className="h-5 w-5" aria-hidden="true" />
+                    <MagnifyingGlassIcon className="h-5 w-5" aria-hidden="true" />
                   </div>
                   <input
                     id="search-field"
@@ -173,7 +168,7 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                           <span className="sr-only">Open user menu for </span>{user.name}
                         </span>
                         <ChevronDownIcon
-                          className="hidden flex-shrink-0 ml-1 h-5 w-5 text-gray-400 lg:block"
+                          className="hidden shrink-0 ml-1 h-5 w-5 text-gray-400 lg:block"
                           aria-hidden="true"
                         />
                       </Menu.Button>
@@ -182,11 +177,11 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                       show={open}
                       as={Fragment}
                       enter="transition ease-out duration-100"
-                      enterFrom="transform opacity-0 scale-95"
-                      enterTo="transform opacity-100 scale-100"
+                      enterFrom="opacity-0 scale-95"
+                      enterTo="opacity-100 scale-100"
                       leave="transition ease-in duration-75"
-                      leaveFrom="transform opacity-100 scale-100"
-                      leaveTo="transform opacity-0 scale-95"
+                      leaveFrom="opacity-100 scale-100"
+                      leaveTo="opacity-0 scale-95"
                     >
                       <Menu.Items
                         static
@@ -203,7 +198,7 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                                 )}
                                 target="_blank" rel="noopener noreferrer"
                               >
-                                <PencilAltIcon
+                                <PencilSquareIcon
                                   className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
                                   aria-hidden="true"
                                 />
@@ -241,7 +236,7 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                                   'w-full group flex items-center px-4 py-2 text-sm'
                                 )}
                               >
-                                <LogoutIcon
+                                <ArrowRightOnRectangleIcon
                                   className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
                                   aria-hidden="true"
                                 />

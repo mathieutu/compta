@@ -1,5 +1,5 @@
-import { ComponentProps } from "react"
+import type {AcademicCapIcon} from '@heroicons/react/24/outline'
 
 export const classNames = (...classes: (string|undefined|false|null)[]) => classes.filter(Boolean).join(' ')
 
-export type Heroicon = (props: ComponentProps<'svg'>) => JSX.Element
+export type Heroicon = typeof AcademicCapIcon

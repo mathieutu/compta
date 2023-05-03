@@ -1,26 +1,26 @@
 import {
   AcademicCapIcon,
-  LibraryIcon,
-  TerminalIcon,
+  BuildingLibraryIcon,
+  CommandLineIcon,
   PresentationChartBarIcon,
-} from '@heroicons/react/outline'
-import { GetServerSidePropsContext } from 'next'
+} from '@heroicons/react/24/outline'
+import type { GetServerSideProps } from 'next'
 import { getSummaryForYear } from '../services/transactions'
 import { formatDateFr } from '../utils/dates'
 import { formatAmount } from '../utils/number'
 import { classNames, Heroicon } from '../utils/tw'
 import { AsyncReturnType } from '../utils/types'
-import { getSession } from "next-auth/client"
+import { getSession } from "next-auth/react"
 import { Transaction, Type } from '../services/airtable'
-import { FC, useState } from 'react'
+import { useState } from 'react'
 
-const typeIcons: Record<Type, Heroicon> = {
+const typeIcons = {
   [Type.ecole]: AcademicCapIcon,
-  [Type.dev]: TerminalIcon,
+  [Type.dev]: CommandLineIcon,
   [Type.formation]: PresentationChartBarIcon,
-  [Type.cotisation]: LibraryIcon,
-  [Type.subvention]: LibraryIcon,
-}
+  [Type.subvention]: BuildingLibraryIcon,
+  [Type.cotisation]: BuildingLibraryIcon,
+} satisfies Record<Type, Heroicon>
 
 const statusStyles = {
   draft: 'bg-gray-100 text-gray-800',
@@ -30,7 +30,7 @@ const statusStyles = {
 
 type Props = AsyncReturnType<typeof getSummaryForYear> & { year: number, searchQuery: string }
 
-export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+export const getServerSideProps = (async (ctx) => {
   const year = Number(ctx.params!.year)
   const session = await getSession(ctx)
 
@@ -41,13 +41,13 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
       year,
     },
   }
-}
+}) satisfies GetServerSideProps
 
 const Card = ({ icon, title, amount, amountSecond, className }: { icon: string, title: string, amount: number, amountSecond?: number, className?: string }) => {
   return <div className={classNames("bg-white overflow-hidden shadow rounded-lg", className)}>
     <div className="p-5">
       <div className="flex items-center">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <span className="text-5xl" aria-hidden="true" >{icon}</span>
         </div>
         <div className="ml-5 w-0 flex-1">
@@ -152,7 +152,7 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
                   <div className="block px-4 py-4 bg-white hover:bg-gray-50">
                     <span className="flex items-center space-x-4">
                       <span className="flex-1 flex space-x-2 truncate">
-                        <Icon className={classNames("flex-shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
+                        <Icon className={classNames("shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
                         <span className="flex flex-1 flex-col text-gray-500 text-sm truncate">
                           <span className="truncate">{transaction.title})</span>
                           <span>
@@ -194,7 +194,7 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
                           <td className="max-w-0 w-full px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <div className="flex">
                               <div className="group inline-flex space-x-2 truncate text-sm">
-                                <Icon className={classNames("flex-shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
+                                <Icon className={classNames("shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
 
                                 <p className="text-gray-500 truncate group-hover:text-gray-900">{transaction.title}</p>
                               </div>
