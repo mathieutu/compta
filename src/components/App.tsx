@@ -5,7 +5,7 @@ import { useRouter } from "next/router"
 import { Dialog, Menu, Transition } from "@headlessui/react"
 import { yearsToFetch } from "../services/transactions"
 import { classNames } from "../utils/tw"
-import { XMarkIcon, Bars3CenterLeftIcon, MagnifyingGlassIcon, BellIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, PencilSquareIcon, DocumentDuplicateIcon } from "@heroicons/react/24/outline"
+import { XMarkIcon, Bars3CenterLeftIcon, MagnifyingGlassIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, PencilSquareIcon, DocumentDuplicateIcon, BuildingOfficeIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline"
 import Link from "next/link"
 
 export const App = ({ children, user, onSearch }: { children: ReactNode, user: DefaultUser, onSearch: (searchQuery: string) => void }) => {
@@ -203,6 +203,42 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                                   aria-hidden="true"
                                 />
                                 Éditer
+                              </a>
+                            )}
+                          </Menu.Item>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <a
+                                href="https://www.autoentrepreneur.urssaf.fr/"
+                                className={classNames(
+                                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                  'group flex items-center px-4 py-2 text-sm'
+                                )}
+                                target="_blank" rel="noopener noreferrer"
+                              >
+                                <BuildingOfficeIcon
+                                  className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                                  aria-hidden="true"
+                                />
+                                Urssaf
+                              </a>
+                            )}
+                          </Menu.Item>
+                          <Menu.Item>
+                            {({ active }) => (
+                              <a
+                                href="https://www.hellobank.fr/"
+                                className={classNames(
+                                  active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
+                                  'group flex items-center px-4 py-2 text-sm'
+                                )}
+                                target="_blank" rel="noopener noreferrer"
+                              >
+                                <CurrencyDollarIcon
+                                  className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
+                                  aria-hidden="true"
+                                />
+                                HelloBank
                               </a>
                             )}
                           </Menu.Item>
