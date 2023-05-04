@@ -1,6 +1,6 @@
-import Airtable, { Records, SelectOptions } from 'airtable';
+import Airtable, { FieldSet, SelectOptions } from 'airtable';
 
-export enum Type {
+export enum TransactionType {
   ecole = 'École',
   dev = 'Développement',
   formation = 'Formation',
@@ -8,55 +8,93 @@ export enum Type {
   subvention =  'Subvention',
 }
 
-type AirtableRecord = {
+export enum TransactionStatus {
+  done = 'done',
+  waiting = 'waiting',
+  draft = 'draft',
+}
+
+type AirtableTransaction = {
   'Date Paiement'?: string;
   'Date Facturation': string;
   Mission: string;
   Client: string;
   Total: number;
   Ref: string;
-  Type: Type;
+  Type: TransactionType;
   Prix: string;
 }
 
 export type Transaction = {
+  id: string;
   datePaiement: Date | undefined;
   dateFacturation: Date | undefined;
   mission: string;
   client: string;
   total: number;
   ref: string;
-  type: Type;
+  type: TransactionType;
   prix: string;
+  status: TransactionStatus;
+  url: string;
 }
 
-export const fetchTransactions = async (select: SelectOptions<AirtableRecord> = {}) => {
-  let transactions: Transaction[] = [];
-  const table = new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID!);
+export const AIRTABLE_URL = "https://airtable.com/tblDxymNWvm8pJQno/viwXqk9tuBBdQS0kP"
 
-  await table('Transactions').select({ sort: [{ field: 'Date Paiement', direction: 'desc' }, { field: 'Date Facturation', direction: 'desc' }], ...select } as any).eachPage((records, fetchNextPage) => {
-    transactions = [
-      ...transactions,
-      ...(records as unknown as Records<AirtableRecord>).map(({ fields }) => ({
-        ref: fields['Ref'],
-        datePaiement: fields['Date Paiement'] ? new Date(fields['Date Paiement']) : undefined,
-        dateFacturation: fields['Date Facturation'] ? new Date(fields['Date Facturation']) : undefined,
-        mission: fields['Mission'],
-        client: fields['Client'],
-        total: fields['Total'],
-        type: fields['Type'],
-        prix: fields['Prix'],
-      }))
-    ];
+const parseTransaction = ({ id, fields }: { id: string, fields: AirtableTransaction }): Transaction => ({
+  id,
+  ref: fields['Ref'],
+  datePaiement: fields['Date Paiement'] ? new Date(fields['Date Paiement']) : undefined,
+  dateFacturation: fields['Date Facturation'] ? new Date(fields['Date Facturation']) : undefined,
+  mission: fields['Mission'],
+  client: fields['Client'],
+  total: fields['Total'],
+  type: fields['Type'],
+  prix: fields['Prix'],
+  status: fields['Date Paiement'] ? TransactionStatus.done : fields['Date Facturation'] ? TransactionStatus.waiting : TransactionStatus.draft,
+  url: `${AIRTABLE_URL}/${id}`,
+})
+
+const table = <AirtableRecord extends FieldSet>(tableName:string) => new Airtable({ apiKey: process.env.AIRTABLE_API_KEY }).base(process.env.AIRTABLE_BASE_ID!).table<AirtableRecord>(tableName);
+
+const transactionsTable = () => table<AirtableTransaction>('Transactions');
+
+export const fetchTransactions = async (select: SelectOptions<AirtableTransaction> = {}) => {
+  const transactions: Record<TransactionStatus, Transaction[]> = {
+    [TransactionStatus.draft]: [],
+    [TransactionStatus.waiting]: [],
+    [TransactionStatus.done]: [],
+  };
+  await transactionsTable().select({ sort: [{ field: 'Date Paiement', direction: 'desc' }, { field: 'Date Facturation', direction: 'desc' }], ...select } as any).eachPage((records, fetchNextPage) => {
+    records.forEach(record => {
+      const transaction = parseTransaction(record);
+      transactions[transaction.status].push(transaction);
+    });
 
     fetchNextPage();
   })
 
+  
   return [
-    ...transactions.filter(({ dateFacturation }) => !dateFacturation),
-    ...transactions.filter(({ datePaiement, dateFacturation }) => dateFacturation && !datePaiement),
-    ...transactions.filter(({ datePaiement, dateFacturation }) => dateFacturation && datePaiement),
+    
+    ...transactions[TransactionStatus.draft],
+    ...transactions[TransactionStatus.waiting],
+    ...transactions[TransactionStatus.done],
 
   ];
 };
+
+const updateTransaction = (transactionId: string, fields: Partial<AirtableTransaction>) => transactionsTable().update(transactionId, fields).then(parseTransaction);
+
+export const updateTransactionDate = async (transactionId: string, currentStatus: TransactionStatus, date: string) => {
+  if (currentStatus === TransactionStatus.draft) {
+    return updateTransaction(transactionId, { 'Date Facturation': date });
+  }
+  
+  if (currentStatus === TransactionStatus.waiting) {
+    return updateTransaction(transactionId, { 'Date Paiement': date });
+  }
+
+  throw new Error('Transaction is already paid, cannot update any date');
+}
 

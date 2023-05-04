@@ -28,7 +28,20 @@ const monthNames = [
 
 export const getMonthName = (month: number) => monthNames[month];
 
-export const getMonthNameShort = (month: number) => monthNames[month].substr(0, 4);
+export const getMonthNameShort = (month: number) => monthNames[month].substring(0, 4);
+
+export const formatDateIso = (date: Date | undefined) => {
+  if (!date) return '';
+
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const year = date.getFullYear();
+
+  const dayIso = day < 10 ? `0${day}` : day;
+  const monthIso = month < 10 ? `0${month}` : month;
+
+  return `${year}-${monthIso}-${dayIso}`;
+}
 
 export const formatDateFr = (date: Date | undefined) => {
   if (!date) return '';

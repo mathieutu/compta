@@ -1,20 +1,20 @@
 import { isDateInTrimester as isDateInQuarter } from "../utils/dates";
-import { fetchTransactions, Transaction, Type } from "./airtable";
+import { fetchTransactions, Transaction, TransactionType } from "./airtable";
 
 const currentYear = new Date().getFullYear();
 const START_YEAR = 2018
 
 export const yearsToFetch = [...Array(currentYear + 1 - START_YEAR)].map((_, key) => String(START_YEAR + key)).reverse()
 
-const isVersement = (transaction: Transaction) => ![Type.cotisation, Type.subvention].includes(transaction.type) && transaction.total > 0
+const isVersement = (transaction: Transaction) => ![TransactionType.cotisation, TransactionType.subvention].includes(transaction.type) && transaction.total > 0
 
 const sumTransactionsTotal = (records: Transaction[]) => records.reduce((acc, { total }) => acc + total, 0);
 
 const calcCotisation = (amountToDeclare: number) => Math.round(amountToDeclare * 21.2 / 100) + Math.round(amountToDeclare * 0.2 / 100)
 
-export const getTransactionsOfQuarter = (transactions: Transaction[], trimester: number, year?: number) => {
+export const getTransactionsOfQuarter = (transactions: Transaction[], quarter: number, year?: number) => {
   const quarterTransactions = transactions
-    .filter(({ datePaiement }) => isDateInQuarter(datePaiement, trimester, year))
+    .filter(({ datePaiement }) => isDateInQuarter(datePaiement, quarter, year))
 
   const amountToDeclare = sumTransactionsTotal(quarterTransactions.filter(isVersement))
   const plannedCotisation = calcCotisation(amountToDeclare)
@@ -25,7 +25,6 @@ export const getTransactionsOfQuarter = (transactions: Transaction[], trimester:
     plannedCotisation: plannedCotisation ? -plannedCotisation : 0,
   }
 }
-
 
 export const getSummaryForYear = async (year = currentYear) => {
   const transactions = (await fetchTransactions())

@@ -3,45 +3,52 @@ import {
   BuildingLibraryIcon,
   CommandLineIcon,
   PresentationChartBarIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline'
-import type { GetServerSideProps } from 'next'
 import { getSummaryForYear } from '../services/transactions'
-import { formatDateFr } from '../utils/dates'
+import { formatDateFr, formatDateIso } from '../utils/dates'
 import { formatAmount } from '../utils/number'
 import { classNames, Heroicon } from '../utils/tw'
 import { AsyncReturnType } from '../utils/types'
 import { getSession } from "next-auth/react"
-import { Transaction, Type } from '../services/airtable'
-import { useState } from 'react'
+import { Transaction, TransactionStatus, TransactionType, updateTransactionDate } from '../services/airtable'
+import { forwardRef, useEffect, useRef, useState } from 'react'
+import { handle, json, redirect } from 'next-runtime';
+import { Form, useFormSubmit } from 'next-runtime/form';
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+import { useRefresh } from '../utils/hooks'
 
 const typeIcons = {
-  [Type.ecole]: AcademicCapIcon,
-  [Type.dev]: CommandLineIcon,
-  [Type.formation]: PresentationChartBarIcon,
-  [Type.subvention]: BuildingLibraryIcon,
-  [Type.cotisation]: BuildingLibraryIcon,
-} satisfies Record<Type, Heroicon>
-
-const statusStyles = {
-  draft: 'bg-gray-100 text-gray-800',
-  waiting: 'bg-yellow-100 text-yellow-800',
-  done: 'bg-green-100 text-green-800',
-}
+  [TransactionType.ecole]: AcademicCapIcon,
+  [TransactionType.dev]: CommandLineIcon,
+  [TransactionType.formation]: PresentationChartBarIcon,
+  [TransactionType.subvention]: BuildingLibraryIcon,
+  [TransactionType.cotisation]: BuildingLibraryIcon,
+} satisfies Record<TransactionType, Heroicon>
 
 type Props = AsyncReturnType<typeof getSummaryForYear> & { year: number, searchQuery: string }
 
-export const getServerSideProps = (async (ctx) => {
-  const year = Number(ctx.params!.year)
-  const session = await getSession(ctx)
+export const getServerSideProps = handle({
+  async get(ctx) {
+    const year = Number(ctx.params!.year)
+    const session = await getSession(ctx)
 
-  return {
-    props: {
+    return json({
       session,
       ...(session ? await getSummaryForYear(year) : {}),
       year,
-    },
+    })
+  },
+  // @ts-expect-error We don't want to return anything here
+  async put(ctx) {
+    const { transactionId, date, status } = ctx.req.body as { transactionId: string, date: string, status: TransactionStatus }
+
+    await updateTransactionDate(transactionId, status, date)
+
+    return json({ success: true })
   }
-}) satisfies GetServerSideProps
+})
 
 const Card = ({ icon, title, amount, amountSecond, className }: { icon: string, title: string, amount: number, amountSecond?: number, className?: string }) => {
   return <div className={classNames("bg-white overflow-hidden shadow rounded-lg", className)}>
@@ -68,6 +75,46 @@ const Card = ({ icon, title, amount, amountSecond, className }: { icon: string, 
   </div>
 }
 
+const StatusBadge = ({ transaction }: { transaction: Transaction }) => {
+
+  const statusBadgesProps = {
+    [TransactionStatus.draft]: { className: 'bg-gray-100 text-gray-800', children: 'À facturer', onClick: () => { } },
+    [TransactionStatus.waiting]: { className: 'bg-yellow-100 text-yellow-800', children: `${transaction.total > 0 ? 'Facturé' : 'Réglé'} le ${formatDateFr(transaction.dateFacturation)}`, onClick: () => { } },
+    [TransactionStatus.done]: { className: 'bg-green-100 text-green-800', children: `${transaction.total > 0 ? 'Reçu' : 'Prélevé'}  le ${formatDateFr(transaction.datePaiement)}`, disabled: true },
+  }
+
+  const { className, ...props } = statusBadgesProps[transaction.status]
+  const submitRef = useRef<HTMLButtonElement>(null)
+
+  const refresh = useRefresh()
+  const [date, setDate] = useState<Date>()
+
+  return (
+    <Form method="put" name="update-transaction-date" onSuccess={refresh}>
+      <input type="hidden" name="transactionId" value={transaction.id} />
+      <input type="hidden" name="date" value={formatDateIso(date)} />
+      <input type="hidden" name="status" value={transaction.status} />
+      <DatePicker
+        disabled={'disabled' in props && props.disabled}
+        selected={date}
+        onChange={date => setDate(date!)}
+        minDate={transaction.dateFacturation}
+        maxDate={new Date()}
+        customInput={
+          <button type="button" className={classNames('inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium', className)} {...props} />
+        }
+        shouldCloseOnSelect={false}
+        onCalendarClose={() => {
+          if (date) {
+            submitRef.current?.click()
+          }
+        }}
+      />
+      <button ref={submitRef} type="submit" className="hidden" />
+    </Form>
+  )
+}
+
 export default function Index({ transactions, chiffresAffaires, nets, year, quartersDetails, searchQuery }: Props) {
 
   type QuarterTitle = keyof typeof quartersDetails
@@ -78,30 +125,10 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
 
   const transactionsToShow: Transaction[] = selectedQuarter ? quartersDetails[selectedQuarter].transactions : transactions
 
-  const formattedTransactions = transactionsToShow
-    .map(transaction => {
-      const status = transaction.datePaiement ? 'done' : transaction.dateFacturation ? 'waiting' : 'draft'
-      const statusLabel = transaction.datePaiement
-        ? `Versé le ${formatDateFr(transaction.datePaiement)}`
-        : transaction.dateFacturation
-          ? `${transaction.total > 0 ? 'Facturé' : 'Réglé'} le ${formatDateFr(transaction.dateFacturation)}`
-          : 'À facturer'
 
-      const title = `${transaction.client} - ${transaction.mission} (${transaction.ref})`
-
-      return {
-        title,
-        statusLabel,
-        status: status as typeof status,
-        total: transaction.total,
-        prix: transaction.prix,
-        type: transaction.type,
-        ref: transaction.ref,
-      }
-    })
-    .filter(transaction => searchQuery.toLowerCase().split(' ').every(word =>
-      Object.values(transaction).join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(word)
-    ))
+  const filteredTransactions = transactionsToShow.filter(transaction => searchQuery.toLowerCase().split(' ').every(word =>
+    Object.values(transaction).join(' ').toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").includes(word)
+  ))
 
 
   return (
@@ -143,32 +170,26 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
       {/* Activity list (smallest breakpoint only) */}
       <div className="shadow sm:hidden ">
         <ul className="mt-2 divide-y divide-gray-200 overflow-hidden shadow sm:hidden">
-          {formattedTransactions
+          {filteredTransactions
             .map(transaction => {
               const Icon = typeIcons[transaction.type]
 
               return (
-                <li key={transaction.ref}>
+                <li key={`mobile_${transaction.id}`}>
                   <div className="block px-4 py-4 bg-white hover:bg-gray-50">
                     <span className="flex items-center space-x-4">
                       <span className="flex-1 flex space-x-2 truncate">
                         <Icon className={classNames("shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
                         <span className="flex flex-1 flex-col text-gray-500 text-sm truncate">
-                          <span className="truncate">{transaction.title})</span>
+                          <span className="truncate">{transaction.client} - {transaction.mission} ({transaction.ref})</span>
                           <span>
                             <span className="text-gray-900 font-medium" title={transaction.prix}>{formatAmount(transaction.total)}</span>
                           </span>
                           <span className="text-right">
-                            <span
-                              className={classNames(
-                                statusStyles[transaction.status],
-                                'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium'
-                              )}
-                            >
-                              {transaction.statusLabel}
-                            </span>
+                            <StatusBadge transaction={transaction} />
                           </span>
                         </span>
+                        <button><PencilSquareIcon /></button>
                       </span>
                     </span>
                   </div>
@@ -185,18 +206,18 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
             <div className="align-middle min-w-full overflow-x-auto shadow overflow-hidden sm:rounded-lg">
               <table className="min-w-full divide-y divide-gray-200">
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {formattedTransactions
+                  {filteredTransactions
                     .map((transaction) => {
                       const Icon = typeIcons[transaction.type]
 
                       return (
-                        <tr key={transaction.ref} className="bg-white">
+                        <tr key={transaction.id} className="bg-white">
                           <td className="max-w-0 w-full px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <div className="flex">
                               <div className="group inline-flex space-x-2 truncate text-sm">
                                 <Icon className={classNames("shrink-0 h-5 w-5 opacity-70", transaction.total > 0 ? 'text-green-400' : 'text-red-400')} aria-hidden="true" />
 
-                                <p className="text-gray-500 truncate group-hover:text-gray-900">{transaction.title}</p>
+                                <p className="text-gray-500 truncate group-hover:text-gray-900">{transaction.client} - {transaction.mission} ({transaction.ref})</p>
                               </div>
                             </div>
                           </td>
@@ -206,14 +227,13 @@ export default function Index({ transactions, chiffresAffaires, nets, year, quar
                             </span>
                           </td>
                           <td className="hidden px-6 py-4 whitespace-nowrap text-sm text-gray-500 md:block">
-                            <span
-                              className={classNames(
-                                statusStyles[transaction.status],
-                                'inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium'
-                              )}
-                            >
-                              {transaction.statusLabel}
-                            </span>
+                            <StatusBadge transaction={transaction} />
+                          </td>
+                          <td className='pr-6'>
+                            <a href={transaction.url} target="_blank" rel="noopener noreferer" className='block text-gray-400 hover:text-gray-500 focus:text-gray-500'>
+                              <PencilSquareIcon className='h-5 w-5' />
+                            </a>
+
                           </td>
                         </tr>
                       )

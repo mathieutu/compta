@@ -5,12 +5,15 @@ import { useRouter } from "next/router"
 import { Dialog, Menu, Transition } from "@headlessui/react"
 import { yearsToFetch } from "../services/transactions"
 import { classNames } from "../utils/tw"
-import { XMarkIcon, Bars3CenterLeftIcon, MagnifyingGlassIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, PencilSquareIcon, DocumentDuplicateIcon, BuildingOfficeIcon, CurrencyDollarIcon } from "@heroicons/react/24/outline"
+import { XMarkIcon, Bars3CenterLeftIcon, MagnifyingGlassIcon, ChevronDownIcon, ArrowRightOnRectangleIcon, PencilSquareIcon, DocumentDuplicateIcon, BuildingOfficeIcon, CurrencyDollarIcon, ArrowPathRoundedSquareIcon, PlusIcon } from "@heroicons/react/24/outline"
 import Link from "next/link"
+import { useRefresh } from "../utils/hooks"
+import { AIRTABLE_URL } from "../services/airtable"
 
 export const App = ({ children, user, onSearch }: { children: ReactNode, user: DefaultUser, onSearch: (searchQuery: string) => void }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const router = useRouter()
+  const refresh = useRefresh()
 
   return (
     <div className="h-screen flex overflow-hidden bg-gray-100">
@@ -132,7 +135,7 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
             <Bars3CenterLeftIcon className="h-6 w-6" aria-hidden="true" />
           </button>
           {/* Search bar */}
-          <div className="flex-1 px-4 flex justify-between sm:px-6 lg:max-w-6xl lg:mx-auto lg:px-8 shadow">
+          <div className="flex-1 px-4 flex justify-between sm:px-6 lg:px-8 shadow">
             <div className="flex-1 flex">
               <form className="w-full flex md:ml-0" action="#" method="GET">
                 <label htmlFor="search-field" className="sr-only">
@@ -152,7 +155,15 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                 </div>
               </form>
             </div>
-            <div className="ml-4 flex items-center md:ml-6">
+            <div className="ml-4 flex items-center gap-2 md:ml-6">
+              <Link href="/create" className="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                <span className="sr-only">Create transaction</span>
+                <PlusIcon className="h-6 w-6" aria-hidden="true" />
+              </Link>
+              <button type="button" onClick={refresh} className="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                <span className="sr-only">Refresh Data</span>
+                <ArrowPathRoundedSquareIcon className="h-6 w-6" aria-hidden="true" />
+              </button>
               {/* Profile dropdown */}
               <Menu as="div" className="ml-3 relative">
                 {({ open }) => (
@@ -191,7 +202,7 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                           <Menu.Item>
                             {({ active }) => (
                               <a
-                                href="https://airtable.com/tblDxymNWvm8pJQno/viwXqk9tuBBdQS0kP"
+                                href={AIRTABLE_URL}
                                 className={classNames(
                                   active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                                   'group flex items-center px-4 py-2 text-sm'
@@ -209,7 +220,7 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                           <Menu.Item>
                             {({ active }) => (
                               <a
-                                href="https://www.autoentrepreneur.urssaf.fr/"
+                                href="https://www.autoentrepreneur.urssaf.fr/services/espace-personnel"
                                 className={classNames(
                                   active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                                   'group flex items-center px-4 py-2 text-sm'
@@ -227,7 +238,7 @@ export const App = ({ children, user, onSearch }: { children: ReactNode, user: D
                           <Menu.Item>
                             {({ active }) => (
                               <a
-                                href="https://www.hellobank.fr/"
+                                href="https://www.hellobank.fr/fr/client"
                                 className={classNames(
                                   active ? 'bg-gray-100 text-gray-900' : 'text-gray-700',
                                   'group flex items-center px-4 py-2 text-sm'
