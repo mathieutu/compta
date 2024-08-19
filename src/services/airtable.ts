@@ -76,7 +76,6 @@ export const fetchTransactions = async (select: SelectOptions<AirtableTransactio
 
   
   return [
-    
     ...transactions[TransactionStatus.draft],
     ...transactions[TransactionStatus.waiting],
     ...transactions[TransactionStatus.done],
@@ -84,7 +83,14 @@ export const fetchTransactions = async (select: SelectOptions<AirtableTransactio
   ];
 };
 
-const updateTransaction = (transactionId: string, fields: Partial<AirtableTransaction>) => transactionsTable().update(transactionId, fields).then(parseTransaction);
+const updateTransaction = (transactionId: string, fields: Partial<AirtableTransaction>) => 
+  transactionsTable()
+  .update(transactionId, fields)
+  .catch((error) => {
+    console.error(error);
+    throw new Error('Error updating transaction');
+  })
+  .then(parseTransaction);
 
 export const updateTransactionDate = async (transactionId: string, currentStatus: TransactionStatus, date: string) => {
   if (currentStatus === TransactionStatus.draft) {
