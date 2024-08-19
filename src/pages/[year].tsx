@@ -18,6 +18,7 @@ import { Form, useFormSubmit } from 'next-runtime/form';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useRefresh } from '../utils/hooks'
+import { isAuthEnabled } from './api/auth/[...nextauth]'
 
 const typeIcons = {
   [TransactionType.ecole]: AcademicCapIcon,
@@ -35,6 +36,7 @@ export const getServerSideProps = handle({
     const session = await getSession(ctx)
 
     return json({
+      isAuthEnabled,
       session,
       ...(session ? await getSummaryForYear(year) : {}),
       year,

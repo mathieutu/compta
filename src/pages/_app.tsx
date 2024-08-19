@@ -9,7 +9,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   const [searchQuery, setSearchQuery] = useState('')
 
   if (!pageProps.session?.user) {
-    return <Login />
+    return <Login isAuthEnabled={pageProps.isAuthEnabled ?? true}/>
   }
 
 
